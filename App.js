@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert, Modal } from 'react-native';
 
 export default function App() {
   const [plan, setPlan] = useState('');
   const [goals, setGoals] = useState([]);
+  const [editingGoal, setEditingGoal] = useState(null);
+  const [editText, setEditText] = useState('');
 
   const addGoal = () => {
     if (plan.trim() !== '') {
@@ -31,33 +33,24 @@ export default function App() {
           text: "Cancel",
           style: "cancel"
         }
-      ]
+      ],
+      { cancelable: true }
     );
   };
 
   const editGoal = (id, text) => {
-    Alert.prompt(
-      "Edit Goal",
-      "Update your goal:",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Update",
-          onPress: (newText) => {
-            if (newText.trim() !== '') {
-              setGoals(goals.map(goal => 
-                goal.id === id ? { ...goal, text: newText.trim() } : goal
-              ));
-            }
-          }
-        }
-      ],
-      "plain-text",
-      text
-    );
+    setEditingGoal(id);
+    setEditText(text);
+  };
+
+  const updateGoal = () => {
+    if (editText.trim() !== '') {
+      setGoals(goals.map(goal => 
+        goal.id === editingGoal ? { ...goal, text: editText.trim() } : goal
+      ));
+      setEditingGoal(null);
+      setEditText('');
+    }
   };
 
   const deleteGoal = (id) => {
@@ -95,6 +88,38 @@ export default function App() {
         style={styles.list}
         contentContainerStyle={styles.listContent}
       />
+
+      <Modal
+        visible={editingGoal !== null}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Goal</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={editText}
+              onChangeText={setEditText}
+              multiline
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setEditingGoal(null)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.updateButton]}
+                onPress={updateGoal}
+              >
+                <Text style={styles.modalButtonText}>Update</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <StatusBar style="auto" />
     </View>
@@ -154,5 +179,49 @@ const styles = StyleSheet.create({
   goalText: {
     fontSize: 16,
     color: '#333',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    padding: 10,
+    borderRadius: 5,
+    width: '45%',
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#ccc',
+  },
+  updateButton: {
+    backgroundColor: '#007AFF',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
